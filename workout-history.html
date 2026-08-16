@@ -1,0 +1,840 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>训练历史 · Progression Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600&family=Spline+Sans+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #10130f;
+    --bg-raise: #171b14;
+    --panel: #1d221a;
+    --ink: #e9ead8;
+    --ink-dim: #9aa08c;
+    --ink-faint: #656a58;
+    --line: #2c3327;
+    --lime: #c6f24e;
+    --lime-dim: #8fae3a;
+    --clay: #e08a5a;
+    --sky: #6fc4d6;
+    --violet: #b39ddb;
+    --rose: #e88aa0;
+    --proj: #55604a;
+    --grid: #232a1e;
+    --day1: #e08a5a;
+    --day2: #6fc4d6;
+    --day3: #b39ddb;
+    --day4: #d8c24e;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Archivo', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 80px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 34px 0 22px;
+    margin-bottom: 26px;
+  }
+  .kicker {
+    font-family: 'Spline Sans Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--lime-dim); margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(30px, 5vw, 46px); letter-spacing: -0.5px; line-height: 1.02;
+  }
+  h1 em { font-style: italic; color: var(--lime); }
+  .sub { color: var(--ink-dim); font-size: 13.5px; margin-top: 12px; max-width: 620px; }
+  .stat-strip { display: flex; gap: 30px; margin-top: 22px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; }
+  .stat .n { font-family: 'Fraunces', serif; font-size: 27px; color: var(--ink); line-height: 1; }
+  .stat .l {
+    font-family: 'Spline Sans Mono', monospace; font-size: 10px;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); margin-top: 6px;
+  }
+
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 4px; width: fit-content; background: var(--bg-raise);
+  }
+  .tab {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 600; letter-spacing: 0.5px;
+    font-size: 14px; color: var(--ink-dim); background: transparent; border: none;
+    padding: 9px 20px; border-radius: 3px; cursor: pointer; transition: all .16s; text-transform: uppercase;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { background: var(--lime); color: #10130f; }
+
+  .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .ctl-label {
+    font-family: 'Spline Sans Mono', monospace; font-size: 10px;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint);
+  }
+  .daypick { display: flex; gap: 6px; flex-wrap: wrap; }
+  .daybtn {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 600; font-size: 13px;
+    background: var(--panel); color: var(--ink-dim); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 8px 16px; cursor: pointer; transition: all .14s;
+  }
+  .daybtn:hover { color: var(--ink); }
+  .daybtn.active { color: #10130f; border-color: transparent; }
+
+  .panel { background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* GRAPH */
+  .day-heading {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px;
+  }
+  .day-heading h2 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 23px; }
+  .day-heading .theme { font-size: 13px; color: var(--ink-dim); }
+  .day-heading .badge {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 600; font-size: 12px;
+    padding: 2px 10px; border-radius: 20px; color: #10130f;
+  }
+  .legend {
+    display: flex; gap: 18px; margin: 6px 0 20px; flex-wrap: wrap;
+    font-family: 'Spline Sans Mono', monospace; font-size: 11px; color: var(--ink-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 13px; height: 3px; display: inline-block; border-radius: 2px; }
+  .swatch.dash { height: 0; border-top: 2px dashed var(--proj); width: 15px; }
+  .swatch.thin { height: 2px; opacity: .55; }
+
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
+  .chart-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 14px 10px; background: var(--panel); }
+  .chart-card h3 { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: 14.5px; margin-bottom: 2px; }
+  .chart-card .cnote { font-family: 'Spline Sans Mono', monospace; font-size: 10.5px; color: var(--ink-faint); margin-bottom: 8px; }
+  svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .axis-txt { font-family: 'Spline Sans Mono', monospace; font-size: 9.5px; fill: var(--ink-faint); }
+  .series-line { fill: none; stroke-width: 2.2; }
+  .series-line.vol { stroke-width: 1.6; opacity: .55; }
+  .proj-line { fill: none; stroke-width: 1.8; stroke-dasharray: 5 4; }
+  .dot { stroke: var(--panel); stroke-width: 1.4; }
+  .dot-proj { stroke-width: 1.4; fill: var(--panel); }
+  .val-lbl { font-family: 'Spline Sans Mono', monospace; font-size: 9.5px; font-weight: 500; }
+  .proj-band { fill: var(--lime); opacity: 0.045; }
+
+  .proj-caption {
+    margin-top: 20px; padding: 14px 16px; background: var(--panel);
+    border-left: 3px solid var(--lime-dim); border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 12.5px; color: var(--ink-dim); line-height: 1.6;
+  }
+  .proj-caption b { color: var(--ink); font-weight: 600; }
+
+  /* TABLE */
+  .tbl-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  thead th {
+    font-family: 'Spline Sans Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--ink-faint); text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--line); white-space: nowrap; position: sticky; top: 0; background: var(--bg-raise);
+  }
+  thead th.exhead { color: var(--ink-dim); }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; white-space: nowrap; }
+  tbody tr:hover { background: var(--panel); }
+  .ex-label { font-weight: 600; color: var(--ink); white-space: normal; }
+  .ex-unit { color: var(--ink-faint); font-size: 10.5px; font-weight: 400; }
+  .sess-date { font-family: 'Spline Sans Mono', monospace; font-size: 12px; color: var(--ink); }
+  .cellsets { font-family: 'Spline Sans Mono', monospace; font-size: 11.5px; color: var(--ink-dim); }
+  .cell-skip { color: var(--clay); font-style: italic; font-size: 11px; }
+  .cell-none { color: var(--ink-faint); }
+  .up { color: var(--lime); }
+  .down { color: var(--rose); }
+  .flat { color: var(--ink-faint); }
+  .table-day-title {
+    font-family: 'Fraunces', serif; font-size: 19px; margin: 26px 0 12px; display: flex; align-items: baseline; gap: 10px;
+  }
+  .table-day-title:first-child { margin-top: 4px; }
+  .table-day-title .badge {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 600; font-size: 12px;
+    padding: 2px 10px; border-radius: 20px; color: #10130f;
+  }
+
+  /* CALENDAR — compact, 3-4 months per row */
+  .cal-year-title { font-family: 'Fraunces', serif; font-size: 20px; margin-bottom: 16px; }
+  .cal-grid-months {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px;
+  }
+  .cal-month { }
+  .cal-month-title {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 600; font-size: 13px;
+    margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; color: var(--ink);
+  }
+  .cal-month-title span { font-family: 'Spline Sans Mono', monospace; font-size: 9.5px; color: var(--ink-faint); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-dow {
+    font-family: 'Spline Sans Mono', monospace; font-size: 8.5px; color: var(--ink-faint);
+    text-align: center; padding-bottom: 2px;
+  }
+  .cal-cell {
+    aspect-ratio: 1 / 1; border: 1px solid var(--grid); border-radius: 2px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+    font-family: 'Spline Sans Mono', monospace; font-size: 9px; color: var(--ink-faint);
+  }
+  .cal-cell.empty { border-color: transparent; }
+  .cal-cell.has { cursor: pointer; color: #10130f; font-weight: 600; transition: transform .1s; }
+  .cal-cell.has:hover { transform: scale(1.12); z-index: 2; }
+  .cal-cell.partial::after {
+    content: ''; position: absolute; top: 2px; right: 2px;
+    width: 4px; height: 4px; border-radius: 50%; background: #10130f; opacity: .5;
+  }
+  .cal-legend { display: flex; gap: 16px; margin-top: 18px; flex-wrap: wrap; font-family: 'Spline Sans Mono', monospace; font-size: 10.5px; color: var(--ink-dim); }
+  .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .cal-legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+
+  .tip {
+    position: fixed; z-index: 50; background: #05060a; border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 14px; max-width: 300px; font-size: 12px;
+    color: var(--ink); pointer-events: none; opacity: 0; transition: opacity .12s;
+    box-shadow: 0 8px 30px rgba(0,0,0,.55);
+  }
+  .tip.show { opacity: 1; }
+  .tip h4 { font-family: 'Spline Sans Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--lime); margin-bottom: 7px; }
+  .tip .row { display: flex; justify-content: space-between; gap: 14px; margin: 3px 0; }
+  .tip .row span:first-child { color: var(--ink-dim); }
+
+  footer {
+    margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 11.5px; color: var(--ink-faint); line-height: 1.7;
+  }
+  .empty-msg { color: var(--ink-faint); font-size: 12.5px; padding: 24px 0; text-align: center; }
+
+  @media (max-width: 760px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 14px; }
+    .stat-strip { gap: 18px 22px; }
+    .stat .n { font-size: 23px; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .cal-grid-months { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .panel { padding: 16px 14px; }
+    .day-heading { flex-wrap: wrap; }
+    .tip { max-width: 78vw; font-size: 11.5px; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding: 9px 8px; text-align: center; }
+  }
+  @media (max-width: 380px) {
+    .cal-grid-months { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .cal-cell { font-size: 8px; }
+  }
+  /* larger touch targets on coarse pointers */
+  @media (pointer: coarse) {
+    .pt-hit { r: 18px; }
+    .daybtn { padding: 10px 18px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">四日哑铃循环 · Progression Log</div>
+    <h1>训练<em>历史</em>与进阶追踪</h1>
+    <p class="sub">自 2026 年 5 月 30 日起的每一次训练。</p>
+    <div class="stat-strip" id="statStrip"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-view="graph">趋势图</button>
+    <button class="tab" data-view="table">数据表</button>
+    <button class="tab" data-view="calendar">日历</button>
+  </div>
+
+  <!-- GRAPH VIEW -->
+  <section class="view active" id="view-graph">
+    <div class="controls">
+      <span class="ctl-label">选择训练日</span>
+      <div class="daypick" id="dayPick"></div>
+    </div>
+    <div class="panel">
+      <div class="day-heading" id="dayHeading"></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--lime)"></i> 最大重量（实际）</span>
+        <span><i class="swatch thin" style="background:var(--sky)"></i> 总容量 lb·次（实际）</span>
+        <span><i class="swatch dash"></i> 预测趋势</span>
+      </div>
+      <div class="charts-grid" id="chartsGrid"></div>
+      <div class="proj-caption" id="projCaption"></div>
+    </div>
+  </section>
+
+  <!-- TABLE VIEW -->
+  <section class="view" id="view-table">
+    <div class="controls">
+      <span class="ctl-label">筛选</span>
+      <div class="daypick" id="tableDayPick"></div>
+    </div>
+    <div class="panel" id="tablePanel"></div>
+  </section>
+
+  <!-- CALENDAR VIEW -->
+  <section class="view" id="view-calendar">
+    <div class="panel">
+      <div class="cal-year-title">2026</div>
+      <div class="cal-grid-months" id="calHolder"></div>
+      <div class="cal-legend" id="calLegend"></div>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+// ============================================================
+// DATA — transcribed verbatim from logged sessions. Nothing inferred.
+// unit = lb. Skipped exercises on 2026-07-14 recorded as skipped.
+// ============================================================
+const DAY_META = {
+  1: { name: "推类 + 核心稳定", color: "#e08a5a", short: "第一天" },
+  2: { name: "髋主导 + 下肢联动", color: "#6fc4d6", short: "第二天" },
+  3: { name: "拉类 + 单侧协调", color: "#b39ddb", short: "第三天" },
+  4: { name: "全身复合循环", color: "#d8c24e", short: "第四天" },
+};
+
+const SESSIONS = [
+  { date: "2026-05-30", day: 2, exercises: [
+    { name: "哑铃深蹲", unit: "each", sets: [[20,12],[20,12],[20,12]] },
+    { name: "罗马尼亚硬拉", unit: "each", sets: [[27.5,10],[27.5,10],[30,10]] },
+    { name: "哑铃箭步蹲", unit: "each/侧", sets: [[17.5,8],[17.5,8],[15,8]], note: "17.5 有些费劲，需继续练一阵" },
+    { name: "农夫行走", unit: "each·步", sets: [[35,60],[35,60],[35,60]], note: "记步数" },
+    { name: "臀桥", unit: "加片", sets: [[50,15],[75,15],[70,15]], note: "机器自重50 + 加片" },
+  ]},
+  { date: "2026-06-06", day: 3, exercises: [
+    { name: "单臂哑铃划船", unit: "each/侧", sets: [[17.5,10],[22.5,10],[22.5,10]] },
+    { name: "坐姿绳索划船", unit: "配重", sets: [[85,12],[80,12],[75,12]] },
+    { name: "交替哑铃弯举", unit: "each/侧", sets: [[22.5,4],[20,10],[20,6]], note: "组1降重到20；组3超级组递减至力竭" },
+    { name: "哑铃伐木", unit: "双手合拿/侧", sets: [[25,6],[25,7],[25,5]] },
+    { name: "自行车卷腹", unit: "自重/侧", sets: [[0,9],[0,5],[0,4]], note: "替换侧平板；9档最陡" },
+  ]},
+  { date: "2026-06-14", day: 4, exercises: [
+    { name: "哑铃深蹲推举", unit: "each", sets: [[15,12],[15,11],[15,9]], note: "3轮循环" },
+    { name: "俯身哑铃划船", unit: "each", sets: [[15,10],[15,12],[17.5,12]] },
+    { name: "哑铃摇摆", unit: "双手合拿", sets: [[22.5,15],[22.5,8],[20,12]], note: "22.5偏重" },
+    { name: "简化波比跳", unit: "自重", sets: [[0,8],[0,8],[0,8]] },
+    { name: "平板支撑", unit: "秒", sets: [[0,30],[0,36],[0,33]], note: "替换平板支撑转体" },
+  ]},
+  { date: "2026-06-22", day: 1, exercises: [
+    { name: "哑铃平板卧推", unit: "each", sets: [[22.5,12],[25,12],[25,9]] },
+    { name: "坐姿哑铃推肩", unit: "each", sets: [[22.5,5],[17.5,10],[17.5,10]], note: "22.5偏重" },
+    { name: "高位下拉", unit: "配重", sets: [[100,8],[85,12],[85,12]] },
+    { name: "哑铃伐木", unit: "双手合拿/侧", sets: [[25,5],[17.5,8],[17.5,8]], note: "替换哑铃抗旋" },
+    { name: "平板支撑", unit: "秒", sets: [[0,48],[0,38],[0,37]] },
+  ]},
+  { date: "2026-06-27", day: 2, exercises: [
+    { name: "哑铃深蹲", unit: "each", sets: [[22.5,12],[22.5,12],[22.5,12]] },
+    { name: "罗马尼亚硬拉", unit: "each", sets: [[30,10],[30,10],[30,10]] },
+    { name: "哑铃箭步蹲", unit: "each/侧", sets: [[17.5,8],[17.5,8],[17.5,8]] },
+    { name: "农夫行走", unit: "each·步", sets: [[35,60],[35,60],[35,60]] },
+    { name: "臀桥", unit: "加片", sets: [[25,10],[25,15],[25,15]] },
+  ]},
+  { date: "2026-07-05", day: 3, exercises: [
+    { name: "单臂哑铃划船", unit: "each/侧", sets: [[22.5,10],[22.5,10],[22.5,10]] },
+    { name: "交替哑铃弯举", unit: "each/侧", sets: [[20,10],[20,10],[20,10]], note: "20仍吃力" },
+    { name: "坐姿绳索划船", unit: "配重", sets: [[80,12],[80,12],[80,12]] },
+    { name: "哑铃伐木", unit: "双手合拿/侧", sets: [[25,10],[17.5,10],[20,10]] },
+    { name: "自行车卷腹", unit: "自重/侧", sets: [[0,10],[0,7],[0,7]], note: "9档最陡" },
+  ]},
+  { date: "2026-07-07", day: 4, exercises: [
+    { name: "哑铃深蹲推举", unit: "each", sets: [[15,12],[15,12],[15,12]] },
+    { name: "俯身哑铃划船", unit: "each", sets: [[17.5,12],[17.5,10],[17.5,10]] },
+    { name: "哑铃摇摆", unit: "双手合拿", sets: [[20,15],[20,15],[20,15]] },
+    { name: "简化波比跳", unit: "自重", sets: [[0,8],[0,8],[0,8]] },
+    { name: "平板支撑", unit: "秒", sets: [[0,35],[0,35],[0,35]] },
+  ]},
+  { date: "2026-07-13", day: 1, exercises: [
+    { name: "哑铃平板卧推", unit: "each", sets: [[25,12],[25,10],[25,12]] },
+    { name: "坐姿哑铃推肩", unit: "each", sets: [[17.5,10],[17.5,10],[17.5,10]] },
+    { name: "高位下拉", unit: "配重", sets: [[85,12],[85,12],[85,9]] },
+    { name: "绳索伐木", unit: "配重/侧", sets: [[20,8],[20,8],[20,8]], note: "替换哑铃伐木；首次基准" },
+    { name: "平板支撑", unit: "秒", sets: [[0,40],[0,40],[0,40]] },
+  ]},
+  { date: "2026-07-14", day: 2, partial: true, exercises: [
+    { name: "哑铃深蹲", unit: "each", sets: [[25,12],[22.5,12],[22.5,12]] },
+    { name: "罗马尼亚硬拉", unit: "each", sets: [[32.5,10],[30,10],[30,10]] },
+    { name: "哑铃箭步蹲", unit: "each/侧", sets: [[17.5,8],[17.5,8]], note: "第三组跳过" },
+    { name: "农夫行走", unit: "each·步", sets: [], skipped: true, note: "跳过" },
+    { name: "臀桥", unit: "加片", sets: [[25,15]], note: "只做一组，其余跳过" },
+  ]},
+  { date: "2026-07-19", day: 3, exercises: [
+    { name: "单臂哑铃划船", unit: "each/侧", sets: [[25,10],[22.5,10],[22.5,10]], note: "第一组加到25" },
+    { name: "交替哑铃弯举", unit: "each/侧", sets: [[20,10],[20,10],[20,10]] },
+    { name: "坐姿绳索划船", unit: "配重", sets: [[85,12],[80,12],[80,12]], note: "第一组加到85" },
+    { name: "哑铃伐木", unit: "双手合拿/侧", sets: [[20,10],[20,10],[20,10]], note: "三组统一20" },
+    { name: "自行车卷腹", unit: "自重/侧", sets: [[0,8],[0,8],[0,8]], note: "9档最陡" },
+  ]},
+  { date: "2026-07-21", day: 4, exercises: [
+    { name: "哑铃深蹲推举", unit: "each", sets: [[17.5,12],[17.5,12],[17.5,8]], note: "3轮循环；加到17.5" },
+    { name: "俯身哑铃划船", unit: "each", sets: [[17.5,12],[17.5,12],[17.5,12]] },
+    { name: "哑铃摇摆", unit: "双手合拿", sets: [[20,12],[20,12],[20,12]], note: "前三动作固定12次" },
+    { name: "简化波比跳", unit: "自重", sets: [[0,8],[0,8],[0,8]] },
+    { name: "平板支撑", unit: "秒", sets: [[0,36],[0,36],[0,36]] },
+  ]},
+  { date: "2026-08-01", day: 1, exercises: [
+    { name: "哑铃平板卧推", unit: "each", sets: [[25,12],[25,12],[27.5,12]], note: "第三组加到27.5，该动作新高" },
+    { name: "坐姿哑铃推肩", unit: "each", sets: [[20,10],[20,10],[17.5,10]], note: "20首次做满10次；下次维持20/20/17.5" },
+    { name: "高位下拉", unit: "配重", sets: [[85,12],[85,12],[85,11]] },
+    { name: "绳索伐木", unit: "配重/侧", sets: [[20,8],[20,8],[20,8]], note: "与7/13相同；进阶靠加配重，不加次数" },
+    { name: "平板支撑", unit: "秒", sets: [[0,40],[0,40],[0,40]] },
+  ]},
+  { date: "2026-08-04", day: 2, exercises: [
+    { name: "哑铃深蹲", unit: "each", sets: [[22.5,12],[25,12],[22.5,12]], note: "重的一组改放中间；下次维持此配置" },
+    { name: "罗马尼亚硬拉", unit: "each", sets: [[32.5,10],[30,10],[30,10]], note: "与7/14逐组相同；下次维持" },
+    { name: "哑铃箭步蹲", unit: "each/侧", sets: [[17.5,8],[17.5,8],[17.5,8]], note: "自6/27以来首次做满三组" },
+    { name: "农夫行走", unit: "each·步", sets: [[35,60],[37.5,60],[35,60]], note: "第二组37.5为该动作新高" },
+    { name: "臀桥", unit: "加片", sets: [[25,15],[25,15],[25,15]], note: "三组均15次" },
+  ]},
+  { date: "2026-08-09", day: 3, exercises: [
+    { name: "单臂哑铃划船", unit: "each/侧", sets: [[25,10],[25,10],[22.5,10]], note: "25从1组延到2组" },
+    { name: "交替哑铃弯举", unit: "each/侧", sets: [[20,10],[20,10],[20,10]], note: "连续第3次完全相同；下次仍维持20" },
+    { name: "坐姿绳索划船", unit: "配重", sets: [[85,12],[80,12],[80,12]], note: "与7/19逐组相同" },
+    { name: "哑铃伐木", unit: "双手合拿/侧", sets: [[20,10],[20,10],[20,10]], note: "与7/19相同；下次仍用20" },
+    { name: "自行车卷腹", unit: "自重/侧", sets: [[0,8],[0,8],[0,8]], note: "9档最陡" },
+  ]},
+  { date: "2026-08-11", day: 4, exercises: [
+    { name: "哑铃深蹲推举", unit: "each", sets: [[17.5,12],[17.5,12],[17.5,12]], note: "3轮循环；17.5首次三轮全做满12" },
+    { name: "俯身哑铃划船", unit: "each", sets: [[17.5,12],[17.5,12],[17.5,12]], note: "与7/21逐组相同" },
+    { name: "哑铃摇摆", unit: "双手合拿", sets: [[20,12],[20,12],[20,12]], note: "与7/21逐组相同" },
+    { name: "简化波比跳", unit: "自重", sets: [[0,8],[0,8],[0,8]], note: "连续第4次完全相同；用户要求维持" },
+    { name: "平板支撑", unit: "秒", sets: [[0,41],[0,41],[0,41]], note: "总时长123秒，与6/22并列最高" },
+  ]},
+  { date: "2026-08-14", day: 1, exercises: [
+    { name: "哑铃平板卧推", unit: "each", sets: [[25,12],[27.5,10],[27.5,10]], note: "27.5从1组延到2组；下次维持此配置" },
+    { name: "坐姿哑铃推肩", unit: "each", sets: [[20,10],[20,10],[20,10]], note: "20首次三组做满；下次维持" },
+    { name: "高位下拉", unit: "配重", sets: [[85,10],[85,10],[85,10]], note: "改为每组10次" },
+    { name: "绳索伐木", unit: "配重/侧", sets: [[20,8],[20,8],[20,8]], note: "连续第3次完全相同" },
+    { name: "平板支撑", unit: "秒", sets: [[0,42],[0,42],[0,42]], note: "总时长126秒，历史最高" },
+  ]},
+];
+
+const BODYWEIGHT_OR_TIME = new Set(["自行车卷腹","简化波比跳","平板支撑","平板支撑转体"]);
+
+// 按训练日隐藏动作：数据保留在 SESSIONS 里，日历当天的详情照常显示，
+// 只是不再出现在该训练日的趋势图和数据表中。
+// 第一天的哑铃伐木只在 6/22 做过一次，之后已被绳索伐木取代。
+const HIDE_FROM_DAY = { 1: ["哑铃伐木"] };
+function hiddenOnDay(day, name){ return (HIDE_FROM_DAY[day]||[]).indexOf(name) >= 0; }
+
+function parseDate(s){ const [y,mo,d]=s.split("-").map(Number); return new Date(y,mo-1,d); }
+function fmtShort(s){ const [ ,mo,d]=s.split("-").map(Number); return `${mo}/${d}`; }
+function maxWeight(sets){ let m=null; sets.forEach(([w])=>{ if(w>0) m=m===null?w:Math.max(m,w); }); return m; }
+function volume(sets){ return sets.reduce((a,[w,r])=> a + (w>0? w*r : 0), 0); }
+function repsTotal(sets){ return sets.reduce((a,[,r])=> a+r, 0); }
+
+// Build, for each exercise, an ordered list of appearances across sessions
+function seriesForExercise(name){
+  const pts = [];
+  SESSIONS.forEach(s=>{
+    const ex = s.exercises.find(e=>e.name===name);
+    if(!ex || ex.skipped || ex.sets.length===0) return;
+    pts.push({
+      date: s.date,
+      maxW: maxWeight(ex.sets),
+      vol: volume(ex.sets),
+      reps: repsTotal(ex.sets),
+      sets: ex.sets,
+      unit: ex.unit,
+      bw: BODYWEIGHT_OR_TIME.has(name),
+    });
+  });
+  return pts;
+}
+
+function linreg(xs, ys){
+  const n=xs.length; if(n<2) return null;
+  const sx=xs.reduce((a,b)=>a+b,0), sy=ys.reduce((a,b)=>a+b,0);
+  const sxx=xs.reduce((a,b)=>a+b*b,0), sxy=xs.reduce((a,b,i)=>a+b*ys[i],0);
+  const den=n*sxx-sx*sx; if(den===0) return null;
+  const slope=(n*sxy-sx*sy)/den, intercept=(sy-slope*sx)/n;
+  const ym=sy/n; let ssr=0, sst=0;
+  xs.forEach((x,i)=>{ const p=slope*x+intercept; ssr+=(ys[i]-p)**2; sst+=(ys[i]-ym)**2; });
+  const r2 = sst===0?1:1-ssr/sst;
+  return { slope, intercept, r2 };
+}
+
+// shared tooltip element (used by both graph points and calendar cells)
+const tip=document.getElementById("tip");
+
+// STAT STRIP
+(function(){
+  const total=SESSIONS.length;
+  const span=Math.round((parseDate(SESSIONS[SESSIONS.length-1].date)-parseDate(SESSIONS[0].date))/86400000);
+  // average days between sessions = span / (number of gaps)
+  const avgEvery = total>1 ? (span/(total-1)) : 0;
+  const avgStr = avgEvery>0 ? avgEvery.toFixed(1)+"天" : "—";
+  const strip=[[total,"训练场次"],[span+"天","跨越周期"],[avgStr,"平均每几日一练"],["4","训练日循环"]];
+  document.getElementById("statStrip").innerHTML=strip.map(([n,l])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+})();
+
+// TABS
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("view-"+t.dataset.view).classList.add("active");
+  });
+});
+
+// ---- day pickers ----
+function buildDayPick(container, cb, initial){
+  container.innerHTML="";
+  [1,2,3,4].forEach(d=>{
+    const b=document.createElement("button");
+    b.className="daybtn"+(d===initial?" active":"");
+    b.textContent=DAY_META[d].short;
+    if(d===initial) b.style.background=DAY_META[d].color;
+    b.addEventListener("click",()=>{
+      container.querySelectorAll(".daybtn").forEach(x=>{x.classList.remove("active");x.style.background="";});
+      b.classList.add("active"); b.style.background=DAY_META[d].color;
+      cb(d);
+    });
+    container.appendChild(b);
+  });
+}
+
+// ---- GRAPH: all exercises of a day, small multiples ----
+function drawDayCharts(day){
+  const meta=DAY_META[day];
+  document.getElementById("dayHeading").innerHTML=
+    `<span class="badge" style="background:${meta.color}">${meta.short}</span><h2>${meta.name}</h2>`;
+
+  // exercises that appear on this day (from any session of that day), in canonical order
+  const daySessions=SESSIONS.filter(s=>s.day===day);
+  const exOrder=[]; const seen=new Set();
+  daySessions.forEach(s=>s.exercises.forEach(ex=>{
+    if(hiddenOnDay(day, ex.name)) return;
+    if(!seen.has(ex.name)){seen.add(ex.name); exOrder.push(ex.name);} }));
+
+  const grid=document.getElementById("chartsGrid");
+  grid.innerHTML="";
+  const projLines=[];
+
+  exOrder.forEach(name=>{
+    const pts=seriesForExercise(name);
+    const card=document.createElement("div"); card.className="chart-card";
+    if(pts.length===0){ return; }
+
+    const bw=pts[0].bw;
+    const card_h=`<h3>${name}</h3>`;
+    if(pts.length<2){
+      const p=pts[0];
+      const val = bw ? `${p.reps}${p.unit==='秒'?'秒总计':'次总计'}` : `最重 ${p.maxW} lb`;
+      card.innerHTML=card_h+`<div class="cnote">仅 1 次记录 · ${fmtShort(p.date)} · ${val}</div>
+        <div class="empty-msg">需 ≥2 次记录才能画趋势</div>`;
+      grid.appendChild(card); return;
+    }
+
+    // geometry
+    const W=440,H=210,mL=34,mR=30,mT=18,mB=26;
+    const t0=parseDate(pts[0].date).getTime();
+    const xsDays=pts.map(p=>(parseDate(p.date).getTime()-t0)/86400000);
+
+    // primary metric: weight (unless bodyweight -> reps)
+    const primary = pts.map(p=> bw ? p.reps : p.maxW);
+    const reg=linreg(xsDays, primary);
+
+    // projection: 1 point out at avg gap
+    const gaps=[]; for(let i=1;i<xsDays.length;i++) gaps.push(xsDays[i]-xsDays[i-1]);
+    const avgGap=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+    const projX=xsDays[xsDays.length-1]+avgGap;
+    const projY=reg?reg.slope*projX+reg.intercept:null;
+
+    // secondary metric: volume (only for weighted)
+    const vols = bw ? null : pts.map(p=>p.vol);
+
+    const allX=[...xsDays, projX];
+    const allP=[...primary, ...(projY!==null?[projY]:[])];
+    const xMax=Math.max(...allX)||1;
+    let pMin=Math.min(...allP), pMax=Math.max(...allP);
+    const pad=(pMax-pMin)*0.22||3; pMin-=pad; pMax+=pad;
+
+    const sx=x=>mL+(x/xMax)*(W-mL-mR);
+    const syP=v=>mT+(1-(v-pMin)/(pMax-pMin||1))*(H-mT-mB);
+
+    // volume scale (right side, independent)
+    let syV=null;
+    if(vols){
+      let vMin=Math.min(...vols), vMax=Math.max(...vols);
+      const vpad=(vMax-vMin)*0.3||10; vMin-=vpad; vMax+=vpad;
+      syV=v=>mT+(1-(v-vMin)/(vMax-vMin||1))*(H-mT-mB);
+    }
+
+    // gridlines
+    let grids=""; const tk=4;
+    for(let i=0;i<=tk;i++){
+      const v=pMin+(pMax-pMin)*i/tk, y=syP(v);
+      grids+=`<line class="gridline" x1="${mL}" y1="${y}" x2="${W-mR}" y2="${y}"/>`;
+      grids+=`<text class="axis-txt" x="${mL-6}" y="${y+3}" text-anchor="end">${v.toFixed(v%1?0:0)}</text>`;
+    }
+
+    // projection band
+    const bandX0=sx(xsDays[xsDays.length-1]);
+    const band=`<rect class="proj-band" x="${bandX0}" y="${mT}" width="${W-mR-bandX0}" height="${H-mT-mB}"/>`;
+
+    // volume line (secondary, drawn first/behind)
+    let volPath="";
+    if(vols){
+      volPath=`<path class="series-line vol" stroke="var(--sky)" d="${
+        pts.map((p,i)=>(i?"L":"M")+sx(xsDays[i])+" "+syV(vols[i])).join(" ")}"/>`;
+    }
+
+    // primary actual line
+    const primPath=`<path class="series-line" stroke="var(--lime)" d="${
+      pts.map((p,i)=>(i?"L":"M")+sx(xsDays[i])+" "+syP(primary[i])).join(" ")}"/>`;
+
+    // projection line
+    let projSeg="";
+    if(projY!==null){
+      const lx=sx(xsDays[xsDays.length-1]), ly=syP(primary[primary.length-1]);
+      projSeg=`<path class="proj-line" stroke="var(--proj)" d="M${lx} ${ly} L${sx(projX)} ${syP(projY)}"/>`;
+    }
+
+    // dots + labels + invisible hit targets (for hover/touch tooltip)
+    let dots="",lbls="",xl="",hits="";
+    pts.forEach((p,i)=>{
+      const x=sx(xsDays[i]), y=syP(primary[i]);
+      dots+=`<circle class="dot" cx="${x}" cy="${y}" r="3.6" fill="var(--lime)"/>`;
+      lbls+=`<text class="val-lbl" x="${x}" y="${y-8}" text-anchor="middle" fill="var(--lime)">${primary[i]}</text>`;
+      xl+=`<text class="axis-txt" x="${x}" y="${H-mB+15}" text-anchor="middle">${fmtShort(p.date)}</text>`;
+      // detailed data for this point
+      const setsDetail = p.sets.map(([w,r])=> w>0?`${w}×${r}`:(p.unit==='秒'?`${r}s`:`${r}`)).join(", ");
+      const payload = JSON.stringify({
+        name, date: p.date, unit: p.unit, bw,
+        maxW: p.maxW, vol: p.vol, reps: p.reps,
+        sets: setsDetail, proj:false
+      }).replace(/'/g,"&#39;");
+      hits+=`<circle class="pt-hit" cx="${x}" cy="${y}" r="14" fill="transparent" style="cursor:pointer" data-pt='${payload}'/>`;
+    });
+    if(projY!==null){
+      const x=sx(projX), y=syP(projY);
+      dots+=`<circle class="dot-proj" cx="${x}" cy="${y}" r="3.4" stroke="var(--proj)"/>`;
+      lbls+=`<text class="val-lbl" x="${x}" y="${y-8}" text-anchor="middle" fill="var(--proj)">${projY.toFixed(bw?0:1)}</text>`;
+      const pd=new Date(t0+projX*86400000);
+      xl+=`<text class="axis-txt" x="${x}" y="${H-mB+15}" text-anchor="middle" fill="var(--proj)">${pd.getMonth()+1}/${pd.getDate()}~</text>`;
+      const payload = JSON.stringify({
+        name, date:`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(pd.getDate()).padStart(2,'0')}`,
+        unit:p_unit(pts), bw, projVal: Number(projY.toFixed(bw?0:1)), r2: reg?reg.r2:null, proj:true
+      }).replace(/'/g,"&#39;");
+      hits+=`<circle class="pt-hit" cx="${x}" cy="${y}" r="14" fill="transparent" style="cursor:pointer" data-pt='${payload}'/>`;
+    }
+
+    const metricName = bw ? (pts[0].unit==='秒'?'总秒数':'总次数') : '最大重量 lb';
+    const perWeek = reg? reg.slope*7 : 0;
+    const trend = reg && Math.abs(perWeek)>=0.05 ? (perWeek>0?`↑ +${perWeek.toFixed(2)}/周`:`↓ ${perWeek.toFixed(2)}/周`) : "持平";
+    const cnote = `${metricName} · ${pts.length}次 · ${trend}${reg?` · R²=${reg.r2.toFixed(2)}`:""}`;
+
+    card.innerHTML=card_h+`<div class="cnote">${cnote}</div>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${name}趋势">
+        ${band}${grids}${volPath}${primPath}${projSeg}${dots}${lbls}${xl}${hits}
+      </svg>`;
+    grid.appendChild(card);
+
+    if(reg && projY!==null && !bw){
+      projLines.push(`<b>${name}</b>：按当前趋势（${trend}），下次预测最大重量约 <b>${projY.toFixed(1)} lb</b>（R²=${reg.r2.toFixed(2)}）`);
+    }
+  });
+
+  const cap=document.getElementById("projCaption");
+  cap.innerHTML=`<b>预测说明：</b>虚线为各动作基于历史记录的线性回归外推，向后预测 1 次训练。<br>`+
+    (projLines.length? projLines.join("；")+"。<br>" : "")+
+    `注意：预测是纯数学外推，只看重量数字趋势，<b>不考虑</b>你的主观感受、疲劳或平台期。多数动作数据点仍少（2–4 次），R² 偏低时预测不确定性大，仅供参考，实际加重以动作标准和当次状态为准。`;
+
+  wirePointTips();
+}
+function p_unit(pts){ return pts[0].unit; }
+
+// attach hover + touch tooltips to all graph hit-points
+function wirePointTips(){
+  document.querySelectorAll(".pt-hit").forEach(el=>{
+    const show = e => {
+      let d; try { d = JSON.parse(el.getAttribute("data-pt")); } catch(_) { return; }
+      showPointTip(e, d);
+    };
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("mousemove", movePointTip);
+    el.addEventListener("mouseleave", hidePointTip);
+    // touch: show on touchstart, follow on touchmove, keep visible
+    el.addEventListener("touchstart", e=>{ e.preventDefault(); show(e.touches[0]); }, {passive:false});
+    el.addEventListener("touchmove", e=>{ e.preventDefault(); movePointTip(e.touches[0]); }, {passive:false});
+  });
+}
+function showPointTip(e, d){
+  const dm = d.name ? "" : "";
+  let bodyRows;
+  if(d.proj){
+    bodyRows = `<div class="row"><span>类型</span><span style="color:var(--proj)">预测点</span></div>
+      <div class="row"><span>${d.bw?'预测总量':'预测最大重量'}</span><span>${d.projVal}${d.bw?(d.unit==='秒'?' s':' 次'):' lb'}</span></div>
+      ${d.r2!==null?`<div class="row"><span>拟合优度 R²</span><span>${d.r2.toFixed(2)}</span></div>`:''}
+      <div style="color:var(--ink-faint);font-size:10.5px;margin-top:6px">线性回归外推，仅供参考</div>`;
+  } else {
+    bodyRows = `<div class="row"><span>各组</span><span>${d.sets}</span></div>
+      ${d.bw
+        ? `<div class="row"><span>${d.unit==='秒'?'总秒数':'总次数'}</span><span>${d.reps}${d.unit==='秒'?' s':' 次'}</span></div>`
+        : `<div class="row"><span>最大重量</span><span>${d.maxW} lb</span></div>
+           <div class="row"><span>总容量</span><span>${d.vol.toLocaleString()} lb·次</span></div>`}`;
+  }
+  tip.innerHTML = `<h4>${d.name} · ${d.date}</h4>${bodyRows}`;
+  tip.classList.add("show");
+  movePointTip(e);
+}
+function movePointTip(e){
+  const pad=14; let x=(e.clientX||0)+pad, y=(e.clientY||0)+pad;
+  const r=tip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth) x=(e.clientX||0)-r.width-pad;
+  if(y+r.height>window.innerHeight) y=(e.clientY||0)-r.height-pad;
+  if(x<4) x=4; if(y<4) y=4;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hidePointTip(){ tip.classList.remove("show"); }
+// hide point tooltip when touching elsewhere
+document.addEventListener("touchstart", e=>{
+  if(!e.target.classList || !e.target.classList.contains("pt-hit")) hidePointTip();
+}, {passive:true});
+
+buildDayPick(document.getElementById("dayPick"), drawDayCharts, 2);
+drawDayCharts(2);
+
+// ---- TABLE: grouped by training day, exercises as rows, sessions as columns ----
+function renderTable(filter){
+  const panel=document.getElementById("tablePanel");
+  const days = filter==="all" ? [1,2,3,4] : [Number(filter)];
+  let html="";
+
+  days.forEach(day=>{
+    const meta=DAY_META[day];
+    const daySessions=SESSIONS.filter(s=>s.day===day); // chronological
+    if(daySessions.length===0) return;
+
+    // canonical exercise order for this day
+    const exOrder=[]; const seen=new Set();
+    daySessions.forEach(s=>s.exercises.forEach(ex=>{
+      if(hiddenOnDay(day, ex.name)) return;
+      if(!seen.has(ex.name)){seen.add(ex.name); exOrder.push(ex.name);} }));
+
+    html+=`<div class="table-day-title"><span class="badge" style="background:${meta.color}">${meta.short}</span> ${meta.name}</div>`;
+    html+=`<div class="tbl-scroll"><table><thead><tr><th class="exhead">动作</th>`;
+    daySessions.forEach(s=>{
+      html+=`<th>${fmtShort(s.date)}${s.partial?' <span style="color:var(--clay)">·部分</span>':''}</th>`;
+    });
+    html+=`</tr></thead><tbody>`;
+
+    exOrder.forEach(name=>{
+      const unit = (daySessions.map(s=>s.exercises.find(e=>e.name===name)).find(Boolean)||{}).unit||"";
+      html+=`<tr><td class="ex-label">${name}<br><span class="ex-unit">${unit}</span></td>`;
+      let prevMax=null;
+      daySessions.forEach(s=>{
+        const ex=s.exercises.find(e=>e.name===name);
+        if(!ex){ html+=`<td class="cell-none">—</td>`; return; }
+        if(ex.skipped || ex.sets.length===0){ html+=`<td class="cell-skip">跳过</td>`; return; }
+        const bw=BODYWEIGHT_OR_TIME.has(name);
+        const setsStr = ex.sets.map(([w,r])=> w>0?`${w}×${r}`:(ex.unit==='秒'?`${r}s`:`${r}`)).join("<br>");
+        // trend arrow vs previous session (by max weight, or reps for bw)
+        let arrow="";
+        const cur = bw ? repsTotal(ex.sets) : maxWeight(ex.sets);
+        if(prevMax!==null && cur!==null){
+          if(cur>prevMax) arrow=` <span class="up">▲</span>`;
+          else if(cur<prevMax) arrow=` <span class="down">▼</span>`;
+          else arrow=` <span class="flat">=</span>`;
+        }
+        prevMax=cur;
+        html+=`<td class="cellsets">${setsStr}${arrow}</td>`;
+      });
+      html+=`</tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  });
+
+  panel.innerHTML=html||`<div class="empty-msg">无记录</div>`;
+}
+buildDayPick(document.getElementById("tableDayPick"), d=>renderTable(String(d)), 2);
+// add an "all" option manually at front
+(function(){
+  const c=document.getElementById("tableDayPick");
+  const b=document.createElement("button");
+  b.className="daybtn active"; b.textContent="全部"; b.style.background="var(--lime)"; b.style.color="#10130f";
+  b.addEventListener("click",()=>{
+    c.querySelectorAll(".daybtn").forEach(x=>{x.classList.remove("active");x.style.background="";x.style.color="";});
+    b.classList.add("active"); b.style.background="var(--lime)"; b.style.color="#10130f";
+    renderTable("all");
+  });
+  c.insertBefore(b, c.firstChild);
+  // deactivate the day-2 default that buildDayPick set
+  c.querySelectorAll(".daybtn").forEach(x=>{ if(x!==b){x.classList.remove("active");x.style.background="";} });
+})();
+renderTable("all");
+
+// ---- CALENDAR: compact, many months per row ----
+function renderCalendar(){
+  const sessByDate={}; SESSIONS.forEach(s=>sessByDate[s.date]=s);
+  const months=[5,6,7,8]; // 2026
+  const dows=["日","一","二","三","四","五","六"];
+  const monthNames=["","1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  const holder=document.getElementById("calHolder");
+  holder.innerHTML=months.map(m=>{
+    const first=new Date(2026,m-1,1), startDow=first.getDay(), days=new Date(2026,m,0).getDate();
+    let cells=dows.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+    for(let i=0;i<startDow;i++) cells+=`<div class="cal-cell empty"></div>`;
+    for(let d=1;d<=days;d++){
+      const ds=`2026-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const sess=sessByDate[ds];
+      if(sess){
+        const meta=DAY_META[sess.day];
+        cells+=`<div class="cal-cell has${sess.partial?' partial':''}" data-date="${ds}" style="background:${meta.color};border-color:${meta.color}">${d}</div>`;
+      } else {
+        cells+=`<div class="cal-cell">${d}</div>`;
+      }
+    }
+    const count=SESSIONS.filter(s=>Number(s.date.split("-")[1])===m).length;
+    return `<div class="cal-month"><div class="cal-month-title">${monthNames[m]} <span>${count}场</span></div><div class="cal-grid">${cells}</div></div>`;
+  }).join("");
+
+  document.getElementById("calLegend").innerHTML=[1,2,3,4].map(d=>
+    `<span><i style="background:${DAY_META[d].color}"></i>${DAY_META[d].short} · ${DAY_META[d].name}</span>`).join("")
+    + `<span><i style="background:transparent;border:1px solid var(--ink-faint);position:relative"></i>· 右上角点=部分完成</span>`;
+
+  holder.querySelectorAll(".cal-cell.has").forEach(cell=>{
+    cell.addEventListener("mouseenter",e=>showTip(e,sessByDate[cell.dataset.date]));
+    cell.addEventListener("mousemove",moveTip);
+    cell.addEventListener("mouseleave",hideTip);
+    cell.addEventListener("click",e=>showTip(e,sessByDate[cell.dataset.date]));
+  });
+}
+function showTip(e,sess){
+  const meta=DAY_META[sess.day];
+  tip.innerHTML=`<h4>${sess.date} · ${meta.short}${sess.partial?' (部分)':''}</h4>
+    <div style="color:var(--ink-dim);margin-bottom:8px;font-size:11px">${meta.name}</div>
+    ${sess.exercises.map(ex=>{
+      const s = (ex.skipped||ex.sets.length===0) ? '<span style="color:var(--clay)">跳过</span>'
+        : ex.sets.map(([w,r])=>w>0?`${w}×${r}`:(ex.unit==='秒'?`${r}s`:`${r}`)).join(", ");
+      return `<div class="row"><span>${ex.name}</span><span>${s}</span></div>`;
+    }).join("")}`;
+  tip.classList.add("show"); moveTip(e);
+}
+function moveTip(e){
+  const pad=14; let x=e.clientX+pad,y=e.clientY+pad;
+  const r=tip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth) x=e.clientX-r.width-pad;
+  if(y+r.height>window.innerHeight) y=e.clientY-r.height-pad;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hideTip(){ tip.classList.remove("show"); }
+renderCalendar();
+
+document.getElementById("footer").innerHTML=
+  `数据区间 2026-05-30 → 2026-08-14 · 共 ${SESSIONS.length} 场训练。重量单位 lb。趋势图按训练日分组，绿线为单组最大重量、蓝线为总容量(lb·次)；自重与计时动作以总次数/秒数作图。预测为线性回归外推，不构成加重指令。7-14 未完成的农夫行走等记为「跳过」。所有数据来自逐次手动记录。`;
+</script>
