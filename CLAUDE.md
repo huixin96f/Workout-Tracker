@@ -37,9 +37,9 @@ Huixin 维护一个**四日哑铃训练循环**，用聊天口头汇报每次训
 
 ```bash
 python3 tools.py validate   # 数据校验 + 真跑一遍 JS 渲染
-python3 tools.py build      # 校验通过后生成 .build/workout-history.artifact.html
 python3 tools.py streaks    # 规则 11.5 的判定依据，不要靠印象
 python3 tools.py preview    # 本地起服务，手机宽度实测
+git push                    # 发布：推送到 GitHub，Pages 自动部署
 ```
 
 只依赖 python3 标准库。JS 运行时检查会自动挑 `node` 或 macOS 的 `osascript`；两个都没有时
@@ -47,19 +47,18 @@ python3 tools.py preview    # 本地起服务，手机宽度实测
 
 ## 发布
 
-参数在 [`.build/publish.json`](.build/publish.json)，每次照抄，**尤其是 `url`**：
+GitHub Pages 直发**源文件** `workout-history.html`（仓库公开，`github.com/huixin96f/Workout-Tracker`）。
 
-- 路径是**相对**的，相对于本文件夹解析
-- **同一会话**重发同一路径 → 网址不变
-- **换了会话**必须把 `url` 显式传进去，否则会生成新网址、作废用户的书签
-- favicon 保持 🏋️ 不变（用户靠图标找标签页）
-
-当前网址：https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1
+- **发布方式 = `git commit` + `git push`**，push 后 GitHub 自动部署（已加 `.nojekyll`）
+- 凭据存在 macOS 钥匙串（username=oauth2），push 无需输密码
+- 新书签：https://huixin96f.github.io/Workout-Tracker/workout-history.html
+- 仓库 / 路径 / 文件名任何一个变了都会换网址，作废书签
+- 旧 Claude artifact 网址（已弃用）：https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1
 
 ## 每次新训练的流程
 
 1. 用户逐个动作口头汇报 → 聊天里用表格回显确认（遵守规则 11.6）
 2. 含糊处先问清楚再记
 3. 用户说"更新 artifact" → 追加 session（日期升序）+ 更新 footer 日期区间
-4. `validate` → `build` → 重新发布 → 按规则 11.1 展示两样
+4. `validate` → `git commit` + `git push` → 按规则 11.1 展示两样
 5. 新产生的长期决定回写进 `WorkoutTracker_Rules.md`，保持它是完整的交接来源

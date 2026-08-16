@@ -116,7 +116,7 @@
    - 在 `SESSIONS` 数组**末尾追加**新 session（保持日期升序）。
    - 更新 footer 里的日期区间上界（`数据区间 2026-05-30 → <新日期>`）。
    - **验证**：跑 `python3 tools.py validate`（本机无 node，校验器见第 10 节）。
-4. **重新构建并重新发布**，然后在同一条回复里**同时**展示 artifact 与网址 —— 见**第 11 节规则 11.1 / 11.2**，这是每次改动都必须做的。
+4. **提交并推送（git push）发布**，然后在同一条回复里**同时**展示 artifact 与网址 —— 见**第 11 节规则 11.1 / 11.2**，这是每次改动都必须做的。
 
 ### 训练后点评风格（重要）
 - **只给事实观察，不要鼓励/鞭策的话**（用户 6/27 明确要求去掉鞭策语）。
@@ -230,7 +230,7 @@
 
 ---
 
-## 10. Claude Code 工作区与发布管线（2026-07-30 建立）
+## 10. 工作区与发布管线（2026-07-30 建立，2026-08-16 迁到 GitHub Pages）
 
 ### 10.1 文件夹结构（保持干净，不要新增散落脚本）
 
@@ -245,14 +245,23 @@
 
 `.build/` 里的东西是**一次性产物**：绝不手改、绝不当作第二真源。要改线上页面就改源文件再重新构建。
 
+### 10.1.1 线上托管（2026-08-16 迁入 GitHub）
+
+- 仓库：`github.com/huixin96f/Workout-Tracker`（**公开**，free 计划不支持私有仓库 Pages）
+- 线上网址（**新书签**）：https://huixin96f.github.io/Workout-Tracker/workout-history.html
+- 旧 Claude artifact 网址（**已弃用**，账号弃用即失效）：https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1
+- **发布方式 = `git push`**：改完源文件 → `validate` → commit → push，GitHub Actions 自动部署（`.nojekyll` 已加，页面是源文件直出，非 `.build/` 构建产物）。
+- 认证：凭据存在 macOS 钥匙串（username=oauth2），push 不需要输密码。
+
 ### 10.2 命令（只依赖 python3 标准库）
 
 ```
 python3 tools.py validate   # 数据校验 + 真实运行一遍 JS
-python3 tools.py build      # 校验通过后生成 .build/workout-history.artifact.html
+python3 tools.py build      # 校验通过后生成 .build/workout-history.artifact.html（仅供本地预览/留档，不再发布）
 python3 tools.py preview    # 本地起服务，用来在手机宽度下实测
 python3 tools.py fonts      # 重新抓取内嵌字体（一次性，已缓存就不用再跑）
 python3 tools.py streaks    # 规则 11.5 的判定：逐个动作算连续完全相同的次数
+git add -A && git commit -m "..." && git push   # 发布 = 推送到 GitHub，自动部署到 Pages
 ```
 
 JS 的运行时检查配一个 DOM stub，把四个训练日的图表、五种表格筛选、日历、以及**每一个数据点的
@@ -275,21 +284,15 @@ JS 的运行时检查配一个 DOM stub，把四个训练日的图表、五种�
 7. footer 的日期区间上下界、header 副标题的起始日期，与 `SESSIONS` 首末场对不上。
 8. JS 运行时报错、图表点渲染为空、提示框 JSON 坏掉、统计条不是 4 项。
 
-### 10.4 发布身份（**URL 是被收藏的，不能变**）
+### 10.4 发布身份（**URL 已被收藏，不能变**）
 
-`.build/publish.json` 记着发布参数，每次照抄，不要临时改：
+**线上网址（唯一，已收藏）：** https://huixin96f.github.io/Workout-Tracker/workout-history.html
+仓库名 / 路径 / 文件名任何一个变了都会换网址。发布流程就是 `git push` 到 main 分支，GitHub Pages 自动部署。
 
-- `file_path`: `.build/workout-history.artifact.html` —— **换路径 = 换新网址 = 作废旧书签**。
-  存的是**相对路径**（8/15 改，此前是绝对路径，文件夹一搬就失效、并可能导致发布到错误路径）
-- `title`: `训练历史 · Progression Log`
-- `favicon`: 🏋️（用户靠图标在标签页里找它，别换）
-- `url`: https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1
-
-**同一个会话里**重新发布同一个 `file_path` 会保持网址不变；**换了会话**则必须把上面这个 `url` 作为参数显式传进去，否则会生成一个新网址、把用户的书签晾在旧版本上。
-
-### 10.5 构建时已验证过的坑（别重新踩）
+### 10.5 构建时已验证过的坑（别重新踩；以下坑针对旧的 Claude artifact 发布，现仅作历史参考）
 
 - 发布时页面会被塞进 host 自己的文档骨架里，所以**不能直接发布源文件**；构建产物只包含"该在 body 里的东西"。
+  - 现 GitHub Pages 直接发**源文件** `workout-history.html`，无此问题。
 - **viewport meta 会丢** → 产物里用一段引导脚本在运行时补回 `width=device-width`，否则手机上按桌面宽度排版。
 - **charset meta 也会丢，且写在 body 里已经太晚** → 产物必须是**纯 ASCII**：markup 用 `&#NNNN;`，`<script>` 里用 `\uXXXX`，`<style>` 里的非 ASCII 只允许出现在注释中（音译处理），出现在真实取值里就直接构建失败。已实测：即使浏览器把页面当 windows-1252 解码，中文照样正常显示。
 - **artifact 环境的 CSP 屏蔽一切外部请求**，Google Fonts 的 `@import` 永远加载不了 → 构建时把 Fraunces / Archivo / Archivo Narrow / Spline Sans Mono 的 **ASCII 子集**内嵌成 data URI（中文本来就走系统字体回退），并把失效的 `@import` 删掉。
@@ -310,19 +313,19 @@ JS 的运行时检查配一个 DOM stub，把四个训练日的图表、五种�
 | # | 内容 | 方式 |
 |---|---|---|
 | 1 | **artifact 本身**，在聊天里内联渲染出来 | `SendUserFile`，`display: "render"` |
-| 2 | **线上网址**，可点击 | 写成链接：https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1 |
+| 2 | **线上网址**，可点击 | 写成链接：https://huixin96f.github.io/Workout-Tracker/workout-history.html |
 
 "任何改动"= 新增/编辑/完成/重排/删除数据，以及任何结构、CSS、JS 的修改。
 **无论改动多小都要两样齐全；只给其中一样不是省事，是漏做。**
 
-### 规则 11.2 —— 每次改动都要重新构建 + 重新发布
+### 规则 11.2 —— 每次改动都要提交并推送发布
 
 在**同一条回复**里完成，这样手机上那份永远不会在两人都没察觉的情况下变旧。
 
 ### 规则 11.3 —— 顺序
 
-改 `workout-history.html` → `python3 tools.py validate` → `python3 tools.py build`
-→ 重新发布（同一个 `file_path`）→ 回复里按规则 11.1 展示两样。
+改 `workout-history.html` → `python3 tools.py validate` → `git commit` + `git push`
+→ 回复里按规则 11.1 展示两样。
 
 校验不通过就**不构建、不发布**，先把问题说清楚。
 
@@ -334,7 +337,7 @@ JS 的运行时检查配一个 DOM stub，把四个训练日的图表、五种�
 |---|---|---|
 | 1 | **上次做的重量和组数**（该训练日每个动作） | 表格 |
 | 2 | **artifact 本身**，内联渲染 | `SendUserFile`，`display: "render"` |
-| 3 | **线上网址**，可点击 | https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1 |
+| 3 | **线上网址**，可点击 | https://huixin96f.github.io/Workout-Tracker/workout-history.html |
 
 - 触发条件是**提问**，不是改动。这类回复通常什么都没改，照样三样齐全。
 - 用的是**上一次已发布的版本**，不需要为了回答问题重新构建或重新发布（除非同时确实改了数据，那才走 11.1/11.2）。
@@ -381,7 +384,7 @@ JS 的运行时检查配一个 DOM stub，把四个训练日的图表、五种�
 
 1. **下一个动作是什么**；
 2. **今天所有还没做的动作，连同各自的重量和组数**——不只是下一个；
-3. **artifact 的链接**：https://claude.ai/code/artifact/a4d428a8-4f06-4fbd-b844-4cb0c7760ea1
+3. **artifact 的链接**：https://huixin96f.github.io/Workout-Tracker/workout-history.html
 
 这样用户在器械之间走动时，一条消息里就能看到剩下全部的目标数字和历史，不用往回翻。
 

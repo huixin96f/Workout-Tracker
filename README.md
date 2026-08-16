@@ -8,4 +8,4 @@
 
 1. **唯一真源是 `workout-history.html`**，`.build/` 全是生成物，绝不手改。
 2. **`WorkoutTracker_Rules.md` 第 11 节的六条回复规则是强制的**，漏掉会让用户手机上那份悄悄变旧。
-3. **发布必须复用 `.build/publish.json` 里的 `url`**，换会话不传 url 会生成新网址、作废用户书签。
+3. **发布 = `git push`**（GitHub Pages 自动部署）。线上网址：https://huixin96f.github.io/Workout-Tracker/workout-history.html
